@@ -4,6 +4,11 @@ import MoviesList from './components/MoviesList';
 import './App.css';
 
 function App() {
+  const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // USING DUMMY DATA
   // const dummyMovies = [
   //   {
   //     id: 1,
@@ -19,9 +24,6 @@ function App() {
   //   },
   // ];
 
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
   // RESOLVING PROMISE WITH THEN/CATCH
   // const fetchMoviesHandler = () => {
   //   fetch('https://swapi.dev/api/films').then(response => { 
@@ -34,27 +36,39 @@ function App() {
   //         openingText: movieData.opening_crawl,
   //         releaseDate: movieData.release_date
   //       };
-  //     }) 
+  //     }) // use .catch block to catch any HTTP errors and log
   //     setMovies(transformedMovies);
   //   });
   // }
 
   // RESOLVING PROMISE WITH ASYNC/AWAIT
+ 
   const fetchMoviesHandler = async () => {
     setIsLoading(true);
-    const response = await fetch('https://swapi.dev/api/films');
-    const data = await response.json();
+    setError(null);
 
-    const transformedMovies = data.results.map(movieData => {
-      return {
-        id: movieData.episode_id,
-        title: movieData.title,
-        openingText: movieData.opening_crawl,
-        releaseDate: movieData.release_date
-      };
-    });
-    setMovies(transformedMovies);
-    setIsLoading(false);
+    try {
+      const response = await fetch('https://swapi.dev/api/films');
+      // if we have an unsuccessful response -> will execute catch block code
+      if (!response.ok) {
+        throw new Error('Something went wrong!');
+      }
+
+      const data = await response.json();
+
+      const transformedMovies = data.results.map(movieData => {
+        return {
+          id: movieData.episode_id,
+          title: movieData.title,
+          openingText: movieData.opening_crawl,
+          releaseDate: movieData.release_date
+        };
+      });
+      setMovies(transformedMovies);
+    } catch (error) {
+      setError(error.message);
+    }
+    setIsLoading(false); // set isLoading to false no matter if have successful or failed API call
   }
 
   return (
@@ -64,6 +78,7 @@ function App() {
       </section>
       <section>
         {isLoading ? <p>Loading...</p> : <MoviesList movies={movies} />}
+        {!isLoading && error && <p>{error}</p>}
       </section>
     </React.Fragment>
   );
