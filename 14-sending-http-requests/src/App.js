@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-
+import React, { useCallback, useEffect, useState } from 'react';
+import AddMovie from './components/AddMovie';
 import MoviesList from './components/MoviesList';
 import './App.css';
 
@@ -43,12 +43,16 @@ function App() {
 
   // RESOLVING PROMISE WITH ASYNC/AWAIT
  
-  const fetchMoviesHandler = async () => {
+  const fetchMoviesHandler = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // use if you want to use default movies from swapi API
       const response = await fetch('https://swapi.dev/api/films');
+      // use if you want to display the movies that you add into firebase
+      // const response = await fetch('https://sending-http-requests-7ff87-default-rtdb.firebaseio.com/movies.json');
+
       // if we have an unsuccessful response -> will execute catch block code
       if (!response.ok) {
         throw new Error('Something went wrong!');
@@ -69,10 +73,30 @@ function App() {
       setError(error.message);
     }
     setIsLoading(false); // set isLoading to false no matter if have successful or failed API call
+  }, []);
+
+  // moving this after the fetchMoviesHandler() function definition
+  useEffect(() => {
+    fetchMoviesHandler();
+  }, [fetchMoviesHandler]);
+
+  const addMovieHandler = async (movie) => {
+    const response = await fetch('https://sending-http-requests-7ff87-default-rtdb.firebaseio.com/movies.json', {
+      method: 'POST',
+      body: JSON.stringify(movie),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await response.json();
+    console.log(data);
   }
 
   return (
     <React.Fragment>
+      <section>
+        <AddMovie onAddMovie={addMovieHandler} />
+      </section>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
       </section>
